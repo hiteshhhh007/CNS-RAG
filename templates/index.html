@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CryptoSec RAG Chatbot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"
+    crossorigin="anonymous"></script>
+
+
+
+  <script>
+    // MathJax Configuration
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']], 
+        displayMath: [['$$', '$$'], ['\\[', '\\]']], 
+        processEscapes: true,
+        tags: 'ams' 
+      },
+      svg: {
+        fontCache: 'global' 
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'], 
+        ignoreHtmlClass: 'tex2jax_ignore', 
+        processHtmlClass: 'tex2jax_process' 
+      }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+
+  </script>
+
+
+  <script>
+    // Tailwind Configuration
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            //Teal primary color palette
+            primary: { 50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 300: '#5eead4', 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 800: '#115e59', 900: '#134e4a' },
+            //Slate secondary color palette (for subtle contrast, e.g., upload button)
+            secondary: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' },
+            //Keep Dark colors as they are general backgrounds/text
+            dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155', 600: '#475569', 500: '#64748b' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+   
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    .dark ::-webkit-scrollbar-track {
+      background: #334155;
+    }
+
+    /* Slate-700 */
+    .dark ::-webkit-scrollbar-thumb {
+      background: #64748b;
+    }
+
+  
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .chat-message {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      to {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+    }
+
+    .modal-enter {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .modal-exit {
+      animation: slideOut 0.3s ease-out;
+    }
+
+    
+    .transition-slow {
+      transition: all 0.4s ease;
+    }
+
+   
+    .icon-primary {
+      color: #0d9488;
+      /* Teal-600 */
+    }
+
+    .dark .icon-primary {
+      color: #2dd4bf;
+      /* Teal-400 */
+    }
+
+    .icon-secondary {
+     
+      color: #8b5cf6;
+    }
+
+    .dark .icon-secondary {
+      color: #a78bfa;
+    }
+
+    
+    .input-focus {
+      transition: all 0.2s ease;
+    }
+
+    .input-focus:focus {
+      
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
+      /* Teal-600 with opacity */
+    }
+
+    .dark .input-focus:focus {
+      
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.3);
+     
+    }
+
+    
+    .sources ul {
+      list-style: disc;
+      margin-left: 1.25rem;
+    }
+
+    .sources li {
+      margin-bottom: 0.25rem;
+    }
+
+    .sources a {
+      color: #0f766e;
+      /* Teal-700 (slightly darker for links) */
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .dark .sources a {
+      color: #5eead4;
+      /* Teal-300 (lighter for dark mode links) */
+    }
+
+    .sources a:hover {
+      text-decoration: underline;
+    }
+
+   
+    .system-message .bubble {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+    }
+
+    .dark .system-message .bubble {
+      background-color: #450a0a;
+      border: 1px solid #7f1d1d;
+      color: #fca5a5;
+    }
+
+    
+    .thinking-block p {
+      color: #4b5563;
+    }
+
+    /* text-gray-600 */
+    .dark .thinking-block p {
+      color: #d1d5db;
+    }
+
+    /* dark:text-gray-300 */
+    .thinking-block {
+      opacity: 0.85;
+    }
+
+    .final-answer {
+    }
+
+    .thinking-block+.final-answer {
+      margin-top: 0.5rem;
+     
+    }
+
+    
+    .generating-placeholder {
+      font-style: italic;
+      color: #6b7280;
+      /* gray-500 */
+    }
+
+    .dark .generating-placeholder {
+      color: #9ca3af;
+      /* dark:gray-400 */
+    }
+
+    /* --- File Icon Colors --- */
+    
+    .icon-pdf {
+      color: #ef4444;
+    }
+
+    /* Red-500 */
+    .dark .icon-pdf {
+      color: #f87171;
+    }
+
+    /* Red-400 */
+    .icon-ppt {
+      color: #ea580c;
+    }
+
+    /* Orange-600 */
+    .dark .icon-ppt {
+      color: #fb923c;
+    }
+
+    /* Orange-400 */
+    .icon-doc {
+      color: #3b82f6;
+    }
+
+    /* Blue-500 */
+    .dark .icon-doc {
+      color: #60a5fa;
+    }
+
+    /* Blue-400 */
+    .icon-xls {
+      color: #16a34a;
+    }
+
+    /* Green-600 */
+    .dark .icon-xls {
+      color: #4ade80;
+    }
+
+    /* Green-400 */
+    .icon-txt {
+      color: #64748b;
+    }
+
+    /* Slate-500 */
+    .dark .icon-txt {
+      color: #94a3b8;
+    }
+
+    /* Slate-400 */
+    .icon-default {
+      color: #6b7280;
+    }
+
+    /* Gray-500 */
+    .dark .icon-default {
+      color: #9ca3af;
+    }
+
+    p code {
+      /* Basic styling for inline code from markdown */
+      background-color: rgba(108, 117, 125, 0.15);
+      /* Lighter gray */
+      padding: 0.1em 0.3em;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+
+    pre code {
+      /* Basic styling for code blocks */
+      display: block;
+      background-color: #f8f9fa;
+      /* Light gray */
+      padding: 0.8em;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 0.9em;
+      border: 1px solid #dee2e6;
+    }
+
+    .dark pre code {
+      background-color: #343a40;
+      /* Darker */
+      color: #f8f9fa;
+      border: 1px solid #495057;
+    }
+
+    .dark p code {
+      background-color: rgba(150, 150, 150, 0.2);
+    }
+
+    /* Gray-400 */
+  </style>
+</head>
+
+<body
+  class="bg-gray-50 dark:bg-dark-900 text-gray-800 dark:text-gray-200 transition-colors duration-200 min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="bg-white dark:bg-dark-800 shadow-md py-4 px-6 sticky top-0 z-10">
+    <div class="container mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <div class="bg-primary-600 text-white p-3 rounded-full flex items-center justify-center">
+          <i class="fas fa-lock text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-primary-700 dark:text-primary-400">CryptoSec RAG Chatbot</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Your expert in cryptography and network security</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <button id="darkModeToggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-700 transition-colors">
+          <i class="fas fa-moon dark:hidden"></i>
+          <i class="fas fa-sun hidden dark:inline"></i>
+        </button>
+
+        <div class="relative">
+          <button id="modeDropdownBtn"
+            class="flex items-center space-x-2 bg-primary-100 dark:bg-dark-700 hover:bg-primary-200 dark:hover:bg-dark-600 px-4 py-2 rounded-lg transition-colors">
+            <span id="currentMode">Normal Chat</span>
+            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="modeDropdownIcon"></i>
+          </button>
+          <div id="modeDropdown"
+            class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-dark-800 rounded-md shadow-lg z-20 border border-gray-200 dark:border-dark-700">
+            <button data-mode="normal"
+              class="mode-option block w-full text-left px-4 py-2 hover:bg-primary-100 dark:hover:bg-dark-700 rounded-t-md transition-colors">
+              <i class="fas fa-comment mr-2 icon-primary"></i> Normal Chat
+            </button>
+            <button data-mode="reasoning"
+              class="mode-option block w-full text-left px-4 py-2 hover:bg-primary-100 dark:hover:bg-dark-700 transition-colors">
+              <i class="fas fa-brain mr-2 icon-secondary"></i> Reasoning Mode
+            </button>
+            <button data-mode="search"
+              class="mode-option block w-full text-left px-4 py-2 hover:bg-primary-100 dark:hover:bg-dark-700 rounded-b-md transition-colors">
+              <i class="fas fa-search mr-2 icon-primary"></i> Online Search
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex flex-1 overflow-hidden container mx-auto px-4 py-6">
+    <!-- Sidebar -->
+    <aside id="sidebar"
+      class="hidden md:block w-64 bg-white dark:bg-dark-800 rounded-lg shadow-md mr-6 overflow-y-auto transition-slow flex-shrink-0">
+      <!-- Chat Sessions Section -->
+      <div class="p-4 border-b border-gray-200 dark:border-dark-700">
+        <h2 class="font-semibold text-lg flex items-center">
+          <i class="fas fa-history mr-2 icon-primary"></i> Chat Sessions
+        </h2>
+        <button id="newSessionBtn"
+          class="mt-3 w-full bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors">
+          <i class="fas fa-plus mr-2"></i> New Session
+        </button>
+      </div>
+      <div class="p-4">
+        <div class="relative">
+          <input type="text" placeholder="Search sessions..."
+            class="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-dark-700 rounded-lg focus:outline-none input-focus">
+          <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+        </div>
+        <!-- Session List Container -->
+        <div class="mt-4 space-y-2" id="sessionListContainer">
+          <!-- Placeholder for current session -->
+          <div
+            class="session-item p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-700 cursor-pointer flex justify-between items-center bg-primary-50 dark:bg-dark-600 transition-colors">
+            <div>
+              <h3 class="font-medium">Current Session</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Active</p>
+            </div>
+            <!-- <i class="fas fa-ellipsis-v text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"></i> -->
+          </div>
+          <!-- Other session items would be dynamically added in a full multi-session feature -->
+        </div>
+      </div>
+
+      <!-- Reference Materials Section -->
+      <div class="p-4 border-t border-gray-200 dark:border-dark-700">
+        <h2 class="font-semibold text-lg flex items-center">
+          <i class="fas fa-book mr-2 icon-primary"></i> Reference Materials
+        </h2>
+        <!-- ** MODIFIED: Container for dynamic sidebar documents ** -->
+        <div class="mt-3 space-y-2" id="sidebarDocsContainer">
+          <!-- JavaScript will populate this -->
+          <p class="text-xs text-gray-400 px-3 animate-pulse">Loading files...</p>
+        </div>
+        <!-- View All Button (display controlled by JS) -->
+        <button id="viewAllDocsBtn" style="display: none;"
+          class="mt-3 w-full text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-dark-700 py-2 px-4 rounded-lg flex items-center justify-center transition-colors">
+          <i class="fas fa-folder-open mr-2"></i> View All Documents
+        </button>
+        <!-- *** Upload Button and Hidden Input *** -->
+        <button id="uploadFileBtn"
+          class="mt-3 w-full bg-secondary-600 hover:bg-secondary-700 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors">
+          <i class="fas fa-upload mr-2"></i> Upload File
+        </button>
+        <input type="file" id="fileUploadInput" class="hidden" accept=".pdf,.pptx,.ppt">
+      </div>
+    </aside>
+
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col bg-white dark:bg-dark-800 rounded-lg shadow-md overflow-hidden">
+      <!-- Chat Header -->
+      <div class="p-4 border-b border-gray-200 dark:border-dark-700 flex justify-between items-center">
+        <div>
+          <h2 class="font-semibold text-lg">Current Session</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Started just now</p> <!-- This could be dynamic later -->
+        </div>
+        <div class="flex space-x-2">
+          <button id="exportSessionBtn"
+            class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors" title="Export Session">
+            <i class="fas fa-file-export"></i>
+          </button>
+          <button id="sidebarToggle"
+            class="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Container -->
+      <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <!-- Initial Welcome Message -->
+        <div class="chat-message">
+          <div class="flex items-start">
+            <div
+              class="bg-primary-100 dark:bg-dark-700 p-3 rounded-full mr-3 flex-shrink-0 flex items-center justify-center self-start mt-1">
+              <i class="fas fa-lock text-primary-600 dark:text-primary-400"></i>
+            </div>
+            <div class="flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
+              <div class="bg-gray-100 dark:bg-dark-700 rounded-lg p-3 sm:p-4 inline-block">
+                <p>Hello! I'm your CryptoSec assistant. I can help with cryptography and network security topics. How
+                  can I assist you today?</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Bot Ready</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Chat messages will be dynamically added here -->
+      </div>
+
+      <!-- Input Area -->
+      <div class="p-4 border-t border-gray-200 dark:border-dark-700">
+        <div id="quickTerms" class="flex flex-wrap gap-2 mb-3 hidden">
+          <button
+            class="quick-term bg-gray-200 dark:bg-dark-700 hover:bg-gray-300 dark:hover:bg-dark-600 px-3 py-1 rounded-full text-sm transition-colors">AES</button>
+          <button
+            class="quick-term bg-gray-200 dark:bg-dark-700 hover:bg-gray-300 dark:hover:bg-dark-600 px-3 py-1 rounded-full text-sm transition-colors">RSA</button>
+          <button
+            class="quick-term bg-gray-200 dark:bg-dark-700 hover:bg-gray-300 dark:hover:bg-dark-600 px-3 py-1 rounded-full text-sm transition-colors">TLS</button>
+          <button
+            class="quick-term bg-gray-200 dark:bg-dark-700 hover:bg-gray-300 dark:hover:bg-dark-600 px-3 py-1 rounded-full text-sm transition-colors">SHA-256</button>
+          <button
+            class="quick-term bg-gray-200 dark:bg-dark-700 hover:bg-gray-300 dark:hover:bg-dark-600 px-3 py-1 rounded-full text-sm transition-colors">PKI</button>
+        </div>
+
+        <div class="flex items-end space-x-2">
+          <button id="quickTermsToggle"
+            class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors">
+            <i class="fas fa-bolt"></i>
+          </button>
+
+          <div class="flex-1 relative">
+            <textarea id="messageInput" rows="1" placeholder="Type your message..."
+              class="w-full p-3 pr-12 bg-gray-100 dark:bg-dark-700 rounded-lg focus:outline-none input-focus resize-none"
+              style="min-height: 50px;"></textarea>
+            <button id="sendMessageBtn"
+              class="absolute right-3 bottom-3 bg-primary-600 hover:bg-primary-700 text-white p-2 rounded-full transition-colors">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+
+          <button id="reasoningBtn"
+            class="p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg hidden md:flex items-center transition-colors">
+            <i class="fas fa-brain mr-2"></i>
+            <span>Reason</span>
+          </button>
+        </div>
+
+        <div class="flex justify-between items-center mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <div>
+            <button id="attachFileBtn" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+              <i class="fas fa-paperclip mr-1"></i> Attach
+            </button>
+            <button id="referenceDocBtn"
+              class="ml-3 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+              <i class="fas fa-book mr-1"></i> Reference
+            </button>
+          </div>
+          <div>
+            <span id="charCount">0/1000</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Sidebar (hidden by default) -->
+  <div id="mobileSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden transition-opacity">
+    <div class="absolute left-0 top-0 h-full w-3/4 bg-white dark:bg-dark-800 shadow-lg overflow-y-auto transition-slow">
+      <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-dark-700">
+        <h2 class="text-xl font-bold">Menu</h2>
+        <button id="closeMobileSidebar"
+          class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <!-- Mobile sidebar content can mirror desktop or be simplified -->
+      <div class="p-4">
+        <!-- Placeholder - Add mobile session/doc lists if needed -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Modal -->
+  <div id="searchModal"
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 transition-opacity">
+    <!-- ... (Search modal structure remains the same) ... -->
+    <div class="bg-white dark:bg-dark-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col modal-enter">
+      <div class="p-4 border-b border-gray-200 dark:border-dark-700 flex justify-between items-center">
+        <h2 class="text-xl font-bold">Online Search</h2>
+        <button id="closeSearchModal"
+          class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors"><i
+            class="fas fa-times"></i></button>
+      </div>
+      <div class="p-4">
+        <div class="relative">
+          <input type="text" id="searchQueryInput" placeholder="Enter search query..."
+            class="w-full pl-10 pr-4 py-3 ...">
+          <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
+          <button id="executeSearchBtn" class="absolute right-3 top-3 bg-primary-600 ...">Search</button>
+        </div>
+        <div class="mt-4 flex space-x-2">
+          <select id="searchFilter" class="bg-gray-100 ...">
+            <option value="all">All Sources</option>...
+          </select>
+          <select id="timeFilter" class="bg-gray-100 ...">
+            <option value="anytime">Any Time</option>...
+          </select>
+        </div>
+      </div>
+      <div id="searchResults" class="flex-1 overflow-y-auto p-4 space-y-4 border-t ...">
+        <div class="text-center py-10 text-gray-500 dark:text-gray-400">
+          <i class="fas fa-search text-4xl mb-3"></i>
+          <p>Enter a search query...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Viewer Modal -->
+  <div id="documentViewerModal"
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 transition-opacity">
+    <div class="bg-white dark:bg-dark-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+      <div class="p-4 border-b border-gray-200 dark:border-dark-700 flex justify-between items-center flex-shrink-0">
+        <h2 class="text-xl font-bold">Reference Materials</h2>
+        <button id="closeDocumentViewer"
+          class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-full transition-colors">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <!-- Optional Tabs -->
+      <!-- <div class="flex border-b border-gray-200 dark:border-dark-700 flex-shrink-0"> ... </div> -->
+
+      
+      <div class="flex-1 overflow-y-auto p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="modalDocsContainer">
+          <!-- JavaScript will populate this -->
+          <p class="text-center col-span-full text-gray-500 dark:text-gray-400 py-6 animate-pulse">Loading documents...
+          </p>
+        </div>
+      </div>
+
+      
+      <div class="p-4 border-t border-gray-200 dark:border-dark-700 flex justify-between items-center flex-shrink-0">
+        <div class="text-sm text-gray-500 dark:text-gray-400 modal-pagination-info">
+          <!-- JS will update this -->
+          Loading info...
+        </div>
+        <!-- Optional Pagination buttons -->
+        <!-- <div class="flex space-x-2"> ... </div> -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div id="loadingIndicator"
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center transition-opacity opacity-0">
+   
+    <div class="bg-white dark:bg-dark-800 p-6 rounded-lg shadow-xl flex flex-col items-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mb-4"></div>
+      <p class="text-lg font-medium">Processing...</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Please wait</p>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div id="notification"
+    class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50 transition-transform duration-300 transform translate-y-4 opacity-0">
+    
+    <div class="flex items-center">
+      <i class="fas fa-check-circle mr-2"></i>
+      <span id="notificationMessage">Success!</span>
+    </div>
+  </div>
+
+  <!-- Link the External JavaScript File -->
+  <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+
+ 
+
+</body>
+
+</html>

@@ -180,6 +180,149 @@ Before you begin, ensure you have the following installed and configured:
 
 ---
 
+## Architecture Diagram
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '13px', 'primaryColor': '#F5F5F5', 'primaryTextColor': '#333', 'lineColor': '#666', 'secondaryColor': '#D2E7FF', 'tertiaryColor': '#FFF4CC'}}}%%
+graph TD
+    subgraph "Legend"
+        direction TB
+        L_User[fa:fa-user User]
+        L_Browser[fa:fa-window-maximize Browser HTML/JS]
+        L_Flask[fa:fa-server Flask Backend app.py]
+        L_Config[fa:fa-cog Configuration config.py/.env]
+        L_S3H[fa:fa-code S3 Handler s3_handler.py]
+        L_VSH[fa:fa-database Vector Store Handler vectorstore_handler.py]
+        L_S3B[fa:fa-aws AWS S3 Bucket]
+        L_Chroma[fa:fa-database ChromaDB Local]
+        L_Ollama[fa:fa-brain Ollama Local LLM/Embeddings]
+        L_LC[fa:fa-link Langchain]
+    end
+
+    subgraph "1. Initialization Flow On App Start"
+        direction TB
+        Start(Start Flask App `python app.py`) --> ReadConfig[Read config.py / .env];
+        ReadConfig --> InitS3Client[Flask calls S3 Handler: Init S3 Client];
+        InitS3Client --> InitEmbed[Flask calls VS Handler: Init Embeddings Model];
+        InitEmbed -- Uses --> O_Embed(Ollama Embeddings);
+        InitEmbed --> InitVS[Flask calls VS Handler: Initialize Vector Store];
+
+        InitVS --> CheckDB{ChromaDB Exists?};
+
+        CheckDB -- No / Force Rebuild --> S3List1[VS Handler calls S3 Handler: List S3 Files/Versions];
+        S3List1 -- Reads --> S3B1(fa:fa-aws AWS S3 Bucket);
+        S3List1 --> ProcessLoop(Loop: Each S3 File);
+        ProcessLoop --> S3Download1[VS Handler calls S3 Handler: Download File];
+        S3Download1 -- Reads --> S3B1;
+        S3Download1 --> LoadSplit1[VS Handler: Load & Split Document];
+        LoadSplit1 --> CreateDB[VS Handler: Create ChromaDB w/ Embeddings];
+        CreateDB -- Uses --> O_Embed;
+        CreateDB --> Persist1[VS Handler: Persist ChromaDB];
+        Persist1 --> InitDone[Initialization Complete];
+
+        CheckDB -- Yes --> LoadDB[VS Handler: Load Existing ChromaDB];
+        LoadDB --> GetDBMeta[VS Handler: Get Metadata from ChromaDB];
+        GetDBMeta --> S3List2[VS Handler calls S3 Handler: List S3 Files/Versions];
+        S3List2 -- Reads --> S3B2(fa:fa-aws AWS S3 Bucket);
+        S3List2 --> Compare[VS Handler: Compare S3 vs DB Metadata];
+        Compare --> IdentifyChanges[Identify New / Updated / Deleted];
+        IdentifyChanges --> DeleteOld{Need Deletions?};
+        DeleteOld -- Yes --> QueryDeleteIDs[VS Handler: Query ChromaDB for IDs to Delete];
+        QueryDeleteIDs --> DeleteChunks[VS Handler: Delete Chunks from ChromaDB];
+        DeleteChunks --> ProcessNewUpdated{Need Processing?};
+        DeleteOld -- No --> ProcessNewUpdated;
+
+        ProcessNewUpdated -- Yes New/Updated --> ProcessLoop2(Loop: Each New/Updated File);
+        ProcessLoop2 --> S3Download2[VS Handler calls S3 Handler: Download File];
+        S3Download2 -- Reads --> S3B2;
+        S3Download2 --> LoadSplit2[VS Handler: Load & Split Document];
+        LoadSplit2 --> AddChunks[VS Handler: Add New/Updated Chunks w/ Embeddings];
+        AddChunks -- Uses --> O_Embed;
+        AddChunks --> ChangesMade{DB Changed?};
+        ProcessNewUpdated -- No --> ChangesMade;
+
+
+        ChangesMade -- Yes --> Persist2[VS Handler: Persist ChromaDB];
+        Persist2 --> InitDone;
+        ChangesMade -- No --> InitDone;
+    end
+
+
+    subgraph "2. Chat Interaction Flow"
+        direction TB
+        User(fa:fa-user User) -- Types message --> Browser(fa:fa-window-maximize Browser);
+        Browser -- GET /chat message, history --> Flask(fa:fa-server Flask Backend);
+        Flask -- Loads history --> Session[Flask Session];
+        Flask --> GetChain[Flask calls VS Handler: Get Chat Chain];
+        GetChain -- Initializes --> LChain(fa:fa-link Langchain ConversationalRetrievalChain);
+        LChain -- Uses --> O_LLM_Chat(Ollama LLM);
+        LChain -- Uses --> O_Embed_Chain(Ollama Embeddings via Chroma);
+        LChain -- Reads --> ChromaDB1(fa:fa-database ChromaDB);
+
+        Flask -- Calls chain.stream --> RAG[RAG Process via Langchain];
+        subgraph "RAG Process Langchain"
+            direction TB
+             RAG_Start(Start Streaming) --> CondenseQ[1. Condense Question];
+             CondenseQ -- Uses --> O_LLM_RAG1(Ollama LLM);
+             CondenseQ --> Retrieve[2. Retrieve Docs];
+             Retrieve -- Query Vector Store --> ChromaDB_RAG(fa:fa-database ChromaDB);
+             Retrieve --> Combine[3. Combine Docs & Generate Answer];
+             Combine -- Uses --> O_LLM_RAG2(Ollama LLM);
+             Combine --> RAG_End(Stream Answer Chunks);
+        end
+        RAG --> Flask;
+        Flask -- Streams SSE data, sources, end --> Browser;
+        Flask -- Updates history --> Session;
+        Browser -- Updates UI --> User;
+    end
+
+    subgraph "3. File Upload Flow"
+        direction TB
+        User_Up(fa:fa-user User) -- Selects & Uploads File --> Browser_Up(fa:fa-window-maximize Browser);
+        Browser_Up -- POST /upload_file file --> Flask_Up(fa:fa-server Flask Backend);
+        Flask_Up --> Validate[Flask: Validate File];
+        Validate --> UploadS3[Flask calls S3 Handler: Upload to S3];
+        UploadS3 -- Writes --> S3B_Up(fa:fa-aws AWS S3 Bucket);
+        UploadS3 --> GetMeta[Flask calls S3 Handler: Get S3 Metadata VersionID];
+        GetMeta -- Reads --> S3B_Up;
+        GetMeta --> ProcessS3Obj[Flask calls VS Handler: Process S3 Object];
+        ProcessS3Obj -- Calls --> S3Download_Up[S3 Handler: Download Temp File];
+        S3Download_Up -- Reads --> S3B_Up;
+        S3Download_Up --> LoadSplit_Up[VS Handler: Load & Split Document];
+        ProcessS3Obj --> DeleteCheck{Delete Old Chunks?};
+        DeleteCheck -- Yes --> DeleteOld_Up[VS Handler: Delete Chunks from ChromaDB];
+        DeleteCheck -- No --> AddNew_Up;
+        DeleteOld_Up --> AddNew_Up[VS Handler: Add New Chunks w/ Embeddings];
+        AddNew_Up -- Uses --> O_Embed_Up(Ollama Embeddings via Chroma);
+        AddNew_Up --> Persist_Up[VS Handler: Persist ChromaDB];
+        Persist_Up --> Resp[Flask: Send Success/Error Response];
+        Resp --> Browser_Up;
+        Browser_Up -- Displays status --> User_Up;
+    end
+
+    %% Styling Optional
+    classDef default fill:#F9F9F9,stroke:#BBB,stroke-width:1px,color:#333;
+    classDef process fill:#D2E7FF,stroke:#87CEEB,stroke-width:1px,color:#000;
+    classDef storage fill:#FFF4CC,stroke:#FFD700,stroke-width:1px,color:#333;
+    classDef external fill:#E8D5E8,stroke:#9370DB,stroke-width:1px,color:#000;
+    classDef decision fill:#FFDAB9,stroke:#FFA07A,stroke-width:1px,color:#000;
+    classDef io fill:#90EE90,stroke:#3CB371,stroke-width:1px,color:#000;
+
+    class User,User_Up io;
+    class Browser,Browser_Up io;
+    class Flask,Flask_Up process;
+    class S3H,L_S3H process;
+    class VSH,L_VSH process;
+    class InitS3Client,InitEmbed,InitVS,ProcessLoop,S3Download1,LoadSplit1,CreateDB,Persist1,LoadDB,GetDBMeta,S3List1,S3List2,Compare,IdentifyChanges,QueryDeleteIDs,DeleteChunks,ProcessLoop2,S3Download2,LoadSplit2,AddChunks,Persist2,Validate,UploadS3,GetMeta,ProcessS3Obj,S3Download_Up,LoadSplit_Up,DeleteOld_Up,AddNew_Up,Persist_Up process;
+    class GetChain,LChain,RAG,RAG_Start,CondenseQ,Retrieve,Combine,RAG_End process;
+    class S3B1,S3B2,S3B_Up,L_S3B storage;
+    class ChromaDB1,ChromaDB_RAG,L_Chroma storage;
+    class Session storage;
+    class O_Embed,O_Embed_Chain,O_LLM_Chat,O_LLM_RAG1,O_LLM_RAG2,O_Embed_Up,L_Ollama external;
+    class L_LC external;
+    class L_User,L_Browser,L_Flask,L_Config,L_S3H,L_VSH,L_S3B,L_Chroma,L_Ollama,L_LC,Start,InitDone,Resp io;
+    class CheckDB,DeleteOld,ProcessNewUpdated,ChangesMade,DeleteCheck decision;
+```
+
 ## 🏗️ How It Works (Architecture Overview)
 
 1.  **Initialization (`initialize_app` in `app.py`):**

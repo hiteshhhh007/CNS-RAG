@@ -1,4 +1,4 @@
-# 🚀 S3-RAG Crypto Chatbot with Ollama & Langchain 🧠
+# 🚀 RAG Crypto Chatbot with S3,Ollama & Langchain 🧠
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 

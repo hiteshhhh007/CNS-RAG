@@ -1,6 +1,6 @@
 # 🚀 S3-RAG Crypto Chatbot with Ollama & Langchain 🧠
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) <!-- Optional: Add a license badge -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
 **A powerful, self-hosted Conversational AI demonstrating Retrieval-Augmented Generation (RAG) using local LLMs via Ollama, vector storage with ChromaDB, and seamless document integration from AWS S3.**
 
@@ -19,7 +19,7 @@ This application provides a web-based chat interface where users can interact wi
 *   **Retrieval-Augmented Generation (RAG):** Uses Langchain to orchestrate the RAG pipeline:
     *   Retrieves relevant text chunks from documents stored in ChromaDB based on user queries.
     *   Injects retrieved context into the LLM prompt.
-*   **Local LLM Support via Ollama:** Leverages locally running LLMs (configurable, e.g., `qwen2.5:7b`, `deepseek-r1:7b`) through Ollama for generation and reasoning, ensuring data privacy.
+*   **Local LLM Support via Ollama:** Leverages locally running LLMs (configurable, `qwen2.5:7b`, `deepseek-r1:7b`) through Ollama for generation and reasoning, ensuring data privacy.
 *   **Vector Store:** Uses ChromaDB to store document embeddings (vectors) locally for efficient similarity search.
 *   **Conversational Memory:** Maintains conversation history per user session for context-aware interactions.
 *   **Streaming Responses:** Provides a smooth chat experience by streaming the LLM's response token by token.
@@ -147,7 +147,7 @@ Before you begin, ensure you have the following installed and configured:
 
 ## ▶️ Running the Application
 
-1.  **Navigate to the Project Root:** Make sure you are in the `your-project-root` directory where `app.py` resides and your virtual environment is activated.
+1.  **Navigate to the Project Root:** Make sure you are in the `CNS-RAG` directory where `app.py` resides and your virtual environment is activated.
 
 2.  **Start the Flask Server:**
     ```bash
@@ -390,7 +390,7 @@ graph TD
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details (or add an actual LICENSE file).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 

@@ -23,7 +23,7 @@ This application provides a web-based chat interface where users can interact wi
 *   **Vector Store:** Uses ChromaDB to store document embeddings (vectors) locally for efficient similarity search.
 *   **Conversational Memory:** Maintains conversation history per user session for context-aware interactions.
 *   **Streaming Responses:** Provides a smooth chat experience by streaming the LLM's response token by token.
-*   **Configurable Models:** Easily switch between a default LLM and a potentially more powerful "reasoning" LLM via a query parameter (or UI toggle if implemented).
+*   **Configurable Models:** Easily switch between a default LLM and a potentially more powerful "reasoning" LLM via a query parameter.
 *   **Modular Code Structure:** Organized into separate modules for configuration, S3 handling, vector store operations, and Flask routes for better maintainability.
 
 ---
@@ -32,11 +32,11 @@ This application provides a web-based chat interface where users can interact wi
 
 *   **Backend:** Python, Flask
 *   **AI/ML Orchestration:** Langchain
-*   **LLMs:** Ollama (hosting models like Qwen, Deepseek, etc.)
-*   **Embeddings:** Ollama (hosting models like Nomic Embed Text)
+*   **LLMs:** Ollama ( Qwen2.5:7b, deepseek-r1:7b)
+*   **Embeddings:** Ollama (Nomic Embed Text)
 *   **Vector Database:** ChromaDB
 *   **Cloud Storage:** AWS S3 (via Boto3)
-*   **Frontend:** HTML, CSS, JavaScript (using Server-Sent Events for streaming)
+*   **Frontend:** HTML, Tailwind-CSS, JavaScript (using Server-Sent Events for streaming)
 *   **Document Loading:** PyPDFLoader, UnstructuredFileLoader (for PPT/PPTX)
 
 ---

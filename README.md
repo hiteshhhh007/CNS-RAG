@@ -1,4 +1,4 @@
-# 🚀 RAG Cryptography & Network Security Chatbot with S3,Ollama & Langchain 🧠
+# 🚀 RAG-Based Cryptography & Network Security Chatbot with S3,Ollama & Langchain 🧠
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 

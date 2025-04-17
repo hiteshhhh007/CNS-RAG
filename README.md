@@ -90,8 +90,8 @@ Before you begin, ensure you have the following installed and configured:
 
 1.  **Clone the Repository:**
     ```bash
-    git clone <your-repository-url>
-    cd your-project-root
+    git clone https://github.com/hiteshhhh007/CNS-RAG.git
+    cd CNS-RAG
     ```
 
 2.  **Create and Activate a Virtual Environment:**

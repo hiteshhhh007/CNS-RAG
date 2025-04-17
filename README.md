@@ -44,21 +44,21 @@ This application provides a web-based chat interface where users can interact wi
 ## 📁 Directory Structure
 ```
 CNS-RAG/
-├── app.py # Main Flask application: routes, initialization orchestration
-├── config.py # All configuration constants (Models, S3, Paths, etc.)
-├── s3_handler.py # Functions specifically for S3 interactions (list, download, upload)
-├── vectorstore_handler.py # Manages ChromaDB, Langchain setup, document processing, S3 sync logic
-├── utils.py # General utility functions (e.g., allowed_file)
+├── app.py                                   # Main Flask application: routes, initialization orchestration
+├── config.py                                # All configuration constants (Models, S3, Paths, etc.)
+├── s3_handler.py                            # Functions specifically for S3 interactions (list, download, upload)
+├── vectorstore_handler.py                   # Manages ChromaDB, Langchain setup, document processing, S3 sync logic
+├── utils.py                                 # General utility functions (e.g., allowed_file)
 ├── templates/
-│ └── index.html # Frontend HTML structure
+│ └── index.html                             # Frontend HTML structure
 ├── static/
 │ └── js/
-│ └── chat.js # Frontend JavaScript for chat logic, SSE, file upload
-├── chroma_db/ # (Created automatically by ChromaDB on first run/sync)
-├── requirements.txt # Python dependencies
-├── .env # Environment variables (AWS keys, secrets - DO NOT COMMIT)
-├── .gitignore # Specifies intentionally untracked files (like .env, chroma_db)
-└── README.md # This file
+│ └── chat.js                                # Frontend JavaScript for chat logic, SSE, file upload
+├── chroma_db/                               # (Created automatically by ChromaDB on first run/sync)
+├── requirements.txt                         # Python dependencies
+├── .env                                     # Environment variables (AWS keys, secrets - DO NOT COMMIT)
+├── .gitignore                               # Specifies intentionally untracked files (like .env, chroma_db)
+└── README.md                                                                  
 ```
 
 ## ⚙️ Prerequisites

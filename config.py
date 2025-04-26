@@ -37,5 +37,5 @@ THINKING_END_MARKER = "<<<THINKING_END>>>"
 def check_secret_key():
     if APP_SECRET_KEY == 'dev-secret-key-change-for-prod':
         print("\n***********************************************************")
-        print("WARNING: Using default Flask secret key."))
+        print("WARNING: Using default Flask secret key.")
         print("***********************************************************\n")
